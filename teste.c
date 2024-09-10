@@ -20,7 +20,6 @@ int main (int argc, char **argv) {
     char   buf[MAXDATASIZE];
     time_t ticks;
 
-
     if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         perror("socket");
         exit(1);
@@ -29,20 +28,19 @@ int main (int argc, char **argv) {
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin_family      = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    //alterado para 8080 para que o servidor e o cliente fiquem na mesma porta
     servaddr.sin_port        = htons(8080); 
 
     if (bind(listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) == -1) {
         perror("bind");
         exit(1);
     }
-    //A função getsockname é usada para obter o endereço associado a um socket.
+
     socklen_t size_servaddr = sizeof(servaddr);
     if (getsockname(listenfd, (struct sockaddr *)&servaddr, &size_servaddr) == -1) {
         perror("getsockname");
         exit(1);
     }
-    //A função ntohs converte números de 16 bits da ordem de bytes da rede para a ordem de bytes do host 
+
     printf("O servidor está escutando na porta %d\n", ntohs(servaddr.sin_port));
     if (listen(listenfd, LISTENQ) == -1) {
         perror("listen");
@@ -68,6 +66,19 @@ int main (int argc, char **argv) {
         inet_ntop(AF_INET, &peeraddr.sin_addr, peer_ip, sizeof(peer_ip));
         printf("IP remoto: %s\n", peer_ip);
         printf("Porta remota: %d\n", ntohs(peeraddr.sin_port));
+
+        // Obter informações do socket local
+        struct sockaddr_in localaddr;
+        socklen_t locallen = sizeof(localaddr);
+        if (getsockname(connfd, (struct sockaddr *)&localaddr, &locallen) == -1) {
+            perror("getsockname");
+            exit(1);
+        }
+
+        char local_ip[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &localaddr.sin_addr, local_ip, sizeof(local_ip));
+        printf("IP local: %s\n", local_ip);
+        printf("Porta local: %d\n", ntohs(localaddr.sin_port));
 
         ticks = time(NULL);
         snprintf(buf, sizeof(buf), "Hello from server!\nTime: %.24s\r\n", ctime(&ticks));
